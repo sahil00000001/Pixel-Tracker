@@ -19,7 +19,9 @@ import {
   Target,
   Sparkles,
   TrendingUp,
-  TestTube
+  TestTube,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -73,6 +75,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [checkPixelId, setCheckPixelId] = useState("");
+  const [expandedPixels, setExpandedPixels] = useState<Set<string>>(new Set());
 
   // Fetch dashboard data
   const { data: dashboardData } = useQuery<DashboardData>({
@@ -144,6 +147,18 @@ export default function Dashboard() {
     });
   };
 
+  const togglePixelExpansion = (pixelId: string) => {
+    setExpandedPixels(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(pixelId)) {
+        newSet.delete(pixelId);
+      } else {
+        newSet.add(pixelId);
+      }
+      return newSet;
+    });
+  };
+
   const formatTimestamp = (timestamp: string) => {
     const now = new Date();
     const time = new Date(timestamp);
@@ -176,6 +191,7 @@ export default function Dashboard() {
             <div>
               <h1 className="text-4xl font-bold mb-2">📧 Pixel Tracker</h1>
               <p className="text-xl text-blue-100">Know when your emails are opened & how long they're read!</p>
+              <p className="text-sm text-blue-200 mt-2">Track email opens with invisible 1x1 pixel images. Perfect for email marketing campaigns, newsletters, and engagement analytics.</p>
             </div>
           </div>
           
@@ -401,62 +417,115 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {dashboardData?.recentPixels.map((pixel) => (
-                  <div key={pixel.id} className="bg-white/60 border border-white/40 rounded-xl p-4 card-hover">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                          {pixel.opened ? (
-                            <div className="p-2 bg-green-100 rounded-full">
-                              <CheckCircle className="h-5 w-5 text-green-600" />
-                            </div>
-                          ) : (
-                            <div className="p-2 bg-gray-100 rounded-full">
-                              <Clock className="h-5 w-5 text-gray-500" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-mono text-sm font-semibold text-gray-800">{pixel.id}</p>
-                          <p className="text-sm text-gray-600">
-                            📅 Created {formatTimestamp(pixel.createdAt)}
-                            {pixel.opened && pixel.openedAt && (
-                              <> • 👀 Opened {formatTimestamp(pixel.openedAt)}</>
-                            )}
-                          </p>
-                          {pixel.opened && (
-                            <p className="text-xs text-gray-500 mt-1 bg-gray-50 rounded-lg px-2 py-1 inline-block">
-                              👁️ Views: {pixel.viewCount} • ⏱️ Time: {formatDuration(pixel.totalViewTime)}
-                              {pixel.lastSeenAt && (
-                                <> • 🕐 Last seen: {formatTimestamp(pixel.lastSeenAt)}</>
+                {dashboardData?.recentPixels.map((pixel) => {
+                  // Generate URLs for each pixel
+                  const baseUrl = window.location.origin;
+                  const trackingUrl = `${baseUrl}/api/pixel/${pixel.id}`;
+                  const embedCode = `<img src="${trackingUrl}" width="1" height="1" style="display:none;" />`;
+                  const isExpanded = expandedPixels.has(pixel.id);
+                  
+                  return (
+                    <div key={pixel.id} className="bg-white/60 border border-white/40 rounded-xl p-4 card-hover">
+                      <div className="space-y-3">
+                        {/* Header with ID and status */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center">
+                              {pixel.opened ? (
+                                <div className="p-2 bg-green-100 rounded-full">
+                                  <CheckCircle className="h-5 w-5 text-green-600" />
+                                </div>
+                              ) : (
+                                <div className="p-2 bg-gray-100 rounded-full">
+                                  <Clock className="h-5 w-5 text-gray-500" />
+                                </div>
                               )}
-                            </p>
-                          )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-mono text-sm font-semibold text-gray-800">{pixel.id}</p>
+                              <p className="text-sm text-gray-600">
+                                📅 Created {formatTimestamp(pixel.createdAt)}
+                                {pixel.opened && pixel.openedAt && (
+                                  <> • 👀 Opened {formatTimestamp(pixel.openedAt)}</>
+                                )}
+                              </p>
+                              {pixel.opened && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  👁️ Views: {pixel.viewCount} • ⏱️ Time: {formatDuration(pixel.totalViewTime)}
+                                  {pixel.lastSeenAt && (
+                                    <> • 🕐 Last seen: {formatTimestamp(pixel.lastSeenAt)}</>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge 
+                              variant={pixel.opened ? "default" : "secondary"}
+                              className={pixel.opened ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}
+                            >
+                              {pixel.opened ? "✅ Opened" : "⏳ Pending"}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => togglePixelExpansion(pixel.id)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Badge 
-                          variant={pixel.opened ? "default" : "secondary"}
-                          className={pixel.opened ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}
-                        >
-                          {pixel.opened ? "✅ Opened" : "⏳ Pending"}
-                        </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(pixel.id)}
-                          className="bg-white/80 hover:bg-white border-gray-200"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
+
+                        {/* Collapsible Details */}
+                        {isExpanded && (
+                          <div className="space-y-3 pt-2 border-t border-gray-200">
+                            {/* Tracking URL */}
+                            <div>
+                              <Label className="text-xs text-gray-600 font-medium">Tracking URL</Label>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Input value={trackingUrl} readOnly className="text-xs bg-gray-50" />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(trackingUrl)}
+                                  className="bg-white/80 hover:bg-white border-gray-200"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* HTML Embed Code */}
+                            <div>
+                              <Label className="text-xs text-gray-600 font-medium">HTML Embed Code</Label>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Input value={embedCode} readOnly className="text-xs bg-gray-50" />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(embedCode)}
+                                  className="bg-white/80 hover:bg-white border-gray-200"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Developer Credit */}
+        <div className="text-center mt-8 text-xs text-gray-400">
+          DEVELOPED BY Sahil Vashisht (Software Developer)
+        </div>
       </div>
     </div>
   );
