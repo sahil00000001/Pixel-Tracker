@@ -64,9 +64,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: metadata ? JSON.parse(metadata as string) : null,
       });
 
-      const baseUrl = process.env.REPLIT_DOMAINS 
-        ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
-        : process.env.BASE_URL || "http://localhost:5000";
+      // Determine base URL from various hosting environments
+      let baseUrl = "http://localhost:5000"; // fallback
+      
+      if (process.env.REPLIT_DOMAINS) {
+        // Replit environment
+        baseUrl = `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
+      } else if (process.env.RENDER_EXTERNAL_URL) {
+        // Render.com environment
+        baseUrl = process.env.RENDER_EXTERNAL_URL;
+      } else if (process.env.VERCEL_URL) {
+        // Vercel environment
+        baseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (process.env.RAILWAY_STATIC_URL) {
+        // Railway environment
+        baseUrl = process.env.RAILWAY_STATIC_URL;
+      } else if (process.env.BASE_URL) {
+        // Custom base URL
+        baseUrl = process.env.BASE_URL;
+      } else if (req.headers.host && req.headers['x-forwarded-proto']) {
+        // Generic reverse proxy detection
+        baseUrl = `${req.headers['x-forwarded-proto']}://${req.headers.host}`;
+      } else if (req.headers.host && process.env.NODE_ENV === 'production') {
+        // Production environment with host header
+        baseUrl = `https://${req.headers.host}`;
+      }
 
       res.json({
         id: pixel.id,

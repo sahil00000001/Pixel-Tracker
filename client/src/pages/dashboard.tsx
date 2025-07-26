@@ -18,8 +18,10 @@ import {
   Mail,
   Target,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  TestTube
 } from "lucide-react";
+import { Link } from "wouter";
 
 interface TrackingPixel {
   id: string;
@@ -196,10 +198,12 @@ export default function Dashboard() {
           </div>
           
           <div className="flex justify-center space-x-4 mt-8">
-            <Button variant="secondary" onClick={() => window.location.href = '/test'} className="bg-white text-blue-600 hover:bg-blue-50">
-              <Target className="mr-2 h-4 w-4" />
-              Test Page
-            </Button>
+            <Link href="/test">
+              <Button variant="secondary" className="bg-white text-blue-600 hover:bg-blue-50">
+                <TestTube className="mr-2 h-4 w-4" />
+                Test Page
+              </Button>
+            </Link>
             <Button variant="secondary" onClick={() => window.open('/api-docs', '_blank')} className="bg-white text-blue-600 hover:bg-blue-50">
               <Image className="mr-2 h-4 w-4" />
               API Docs

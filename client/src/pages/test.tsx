@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, TestTube, Eye } from "lucide-react";
+import { Copy, TestTube, Eye, Home, ArrowRight } from "lucide-react";
+import { Link, useLocation } from "wouter";
 
 export default function TestPage() {
   const { toast } = useToast();
   const [pixelData, setPixelData] = useState<any>(null);
   const [trackingUrl, setTrackingUrl] = useState("");
+  const [, setLocation] = useLocation();
 
   const createTestPixel = async () => {
     try {
@@ -60,9 +62,23 @@ export default function TestPage() {
     });
   };
 
+  const goToDashboard = () => {
+    setLocation("/dashboard");
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
+        {/* Navigation */}
+        <div className="mb-6">
+          <Link href="/dashboard">
+            <Button variant="outline" className="mb-4">
+              <Home className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground flex items-center">
             <TestTube className="mr-3 h-8 w-8 text-primary" />
@@ -124,6 +140,25 @@ export default function TestPage() {
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
+                  </div>
+                  
+                  {/* Action buttons after pixel creation */}
+                  <div className="flex gap-2 pt-4">
+                    <Button 
+                      onClick={goToDashboard}
+                      className="flex-1"
+                      variant="outline"
+                    >
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      View Dashboard
+                    </Button>
+                    <Button 
+                      onClick={() => setPixelData(null)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Create Another
+                    </Button>
                   </div>
                 </div>
               )}

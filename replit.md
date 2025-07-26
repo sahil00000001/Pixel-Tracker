@@ -78,6 +78,7 @@ Preferred communication style: Simple, everyday language.
 - **Frontend**: Static build served from `/dist/public`
 - **Backend**: Express server serving API and static files
 - **Environment**: Works out of the box without external dependencies
+- **Multi-Platform Support**: Auto-detects hosting environment (Replit, Render, Vercel, Railway) for correct URL generation
 
 ### Tracking Implementation
 - 1x1 transparent GIF pixel tracking
