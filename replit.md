@@ -39,6 +39,7 @@ Preferred communication style: Simple, everyday language.
 - `GET /api/pixel/:id` - Serves 1x1 transparent GIF and marks pixel as opened
 - `POST /api/pixel/check` - Checks if a specific pixel has been opened
 - `GET /api/dashboard` - Returns stats and recent pixel activity
+- `GET /api-docs` - Comprehensive API documentation for developers
 
 ### Frontend Features
 - **Attractive Hero Section**: Gradient background with cute email SVG and feature highlights
@@ -46,8 +47,11 @@ Preferred communication style: Simple, everyday language.
 - **Colorful Statistics**: 5 beautiful stat cards with colored icons and animations
 - **Pixel Creation**: Gradient buttons with icons and loading states
 - **Status Checking**: Real-time pixel open status monitoring with improved UX
+- **Collapsible Pixel Details**: Click chevron to expand/collapse tracking URLs and embed codes
 - **Recent Activity**: Styled pixel cards with emojis and detailed tracking info
 - **Time Tracking Display**: Shows view counts, duration, and last seen timestamps
+- **Comprehensive Descriptions**: Detailed explanations on both dashboard and test pages
+- **Developer Credit**: "DEVELOPED BY Sahil Vashisht (Software Developer)" attribution
 
 ## Data Flow
 
@@ -67,6 +71,15 @@ Preferred communication style: Simple, everyday language.
 - **tsx**: TypeScript execution for development
 - **vite**: Fast bundling and development server
 
+## API Documentation
+
+### Comprehensive API Reference
+- **File**: `API_DOCUMENTATION.md` - Complete API reference with examples
+- **Web Interface**: `/api-docs` route serves formatted documentation
+- **Features**: Detailed examples in JavaScript, Python, PHP, and cURL
+- **Advanced Use Cases**: Campaign tracking, A/B testing, real-time monitoring
+- **Integration Examples**: Ready-to-use code snippets for popular platforms
+
 ## Deployment Strategy
 
 ### Development
@@ -83,5 +96,7 @@ Preferred communication style: Simple, everyday language.
 ### Tracking Implementation
 - 1x1 transparent GIF pixel tracking
 - Unique UUID generation for each pixel
+- Advanced time tracking with view count and duration
 - Real-time status updates via in-memory storage
 - Console logging for tracking events
+- Session-based viewing time calculation (30-second timeout)
