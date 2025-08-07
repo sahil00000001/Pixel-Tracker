@@ -181,72 +181,102 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Hero Section */}
-        <div className="intro-card rounded-2xl p-8 mb-8 text-center shadow-2xl">
-          <div className="flex items-center justify-center mb-6">
-            {/* Cute Email Tracking SVG */}
-            <svg className="w-20 h-20 text-white mr-4" fill="currentColor" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="rgba(255,255,255,0.2)" />
-              <rect x="20" y="35" width="60" height="40" rx="4" fill="white" opacity="0.9" />
-              <path d="M25 40 L50 55 L75 40" stroke="currentColor" strokeWidth="2" fill="none" />
-              <circle cx="65" cy="25" r="8" fill="#FFD700" />
-              <circle cx="63" cy="23" r="2" fill="white" />
-              <circle cx="67" cy="23" r="2" fill="white" />
-              <path d="M61 27 Q65 29 69 27" stroke="white" strokeWidth="1.5" fill="none" />
-              <path d="M35 60 L45 60 M35 65 L55 65 M35 70 L50 70" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-            <div>
-              <h1 className="text-4xl font-bold mb-2">📧 Pixel Tracker</h1>
-              <p className="text-xl text-blue-100">Know when your emails are opened & how long they're read!</p>
-              <p className="text-sm text-blue-200 mt-2">Track email opens with invisible 1x1 pixel images. Perfect for email marketing campaigns, newsletters, and engagement analytics.</p>
+        {/* Enhanced Hero Section */}
+        <div className="relative intro-card rounded-3xl p-8 mb-8 text-center shadow-2xl overflow-hidden">
+          {/* Animated background particles */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-full blur-xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full blur-xl animate-pulse animation-delay-1000"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-gradient-to-br from-yellow-400/20 to-orange-400/20 rounded-full blur-xl animate-pulse animation-delay-2000"></div>
+          </div>
+          
+          <div className="relative flex flex-col md:flex-row items-center justify-center mb-6">
+            {/* Enhanced Email Tracking SVG with animations */}
+            <div className="relative mr-6 mb-4 md:mb-0">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20 animate-ping"></div>
+              <svg className="relative w-24 h-24 text-white animate-bounce" fill="currentColor" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="rgba(255,255,255,0.2)" />
+                <rect x="20" y="35" width="60" height="40" rx="4" fill="white" opacity="0.9" />
+                <path d="M25 40 L50 55 L75 40" stroke="currentColor" strokeWidth="2" fill="none" />
+                <circle cx="65" cy="25" r="8" fill="#FFD700" className="animate-pulse" />
+                <circle cx="63" cy="23" r="2" fill="white" />
+                <circle cx="67" cy="23" r="2" fill="white" />
+                <path d="M61 27 Q65 29 69 27" stroke="white" strokeWidth="1.5" fill="none" />
+                <path d="M35 60 L45 60 M35 65 L55 65 M35 70 L50 70" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+              <div className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-green-400 to-green-500 rounded-full animate-pulse shadow-lg"></div>
+            </div>
+            <div className="text-center md:text-left">
+              <h1 className="text-5xl md:text-6xl font-bold mb-3 bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent animate-fade-in">
+                📧 Pixel Tracker
+              </h1>
+              <p className="text-xl md:text-2xl text-blue-100 mb-2 font-medium">
+                Know when your emails are opened & how long they're read!
+              </p>
+              <p className="text-sm text-blue-200 max-w-2xl mx-auto md:mx-0">
+                🚀 Track email opens with invisible 1x1 pixel images. Perfect for email marketing campaigns, newsletters, and engagement analytics with advanced anti-ghost technology.
+              </p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="bg-white/20 rounded-lg p-4">
-              <Mail className="h-8 w-8 mx-auto mb-2 text-white" />
-              <h3 className="font-semibold text-white">Track Opens</h3>
-              <p className="text-blue-100 text-sm">See exactly when emails are opened</p>
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 hover:bg-white/30 transition-all duration-300 hover:scale-105 border border-white/10">
+              <div className="relative">
+                <Mail className="h-10 w-10 mx-auto mb-3 text-white animate-pulse" />
+                <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full animate-ping"></div>
+              </div>
+              <h3 className="font-bold text-white text-lg mb-2">Track Opens</h3>
+              <p className="text-blue-100 text-sm">See exactly when emails are opened with real-time notifications</p>
             </div>
-            <div className="bg-white/20 rounded-lg p-4">
-              <Clock className="h-8 w-8 mx-auto mb-2 text-white" />
-              <h3 className="font-semibold text-white">Time Tracking</h3>
-              <p className="text-blue-100 text-sm">Monitor how long emails are viewed</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 hover:bg-white/30 transition-all duration-300 hover:scale-105 border border-white/10">
+              <div className="relative">
+                <Clock className="h-10 w-10 mx-auto mb-3 text-white animate-pulse animation-delay-500" />
+                <div className="absolute -top-1 -right-1 h-3 w-3 bg-blue-400 rounded-full animate-ping animation-delay-500"></div>
+              </div>
+              <h3 className="font-bold text-white text-lg mb-2">Duration Tracking</h3>
+              <p className="text-blue-100 text-sm">Monitor precise viewing time with millisecond accuracy</p>
             </div>
-            <div className="bg-white/20 rounded-lg p-4">
-              <TrendingUp className="h-8 w-8 mx-auto mb-2 text-white" />
-              <h3 className="font-semibold text-white">Analytics</h3>
-              <p className="text-blue-100 text-sm">Get insights on engagement patterns</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 hover:bg-white/30 transition-all duration-300 hover:scale-105 border border-white/10">
+              <div className="relative">
+                <TrendingUp className="h-10 w-10 mx-auto mb-3 text-white animate-pulse animation-delay-1000" />
+                <div className="absolute -top-1 -right-1 h-3 w-3 bg-purple-400 rounded-full animate-ping animation-delay-1000"></div>
+              </div>
+              <h3 className="font-bold text-white text-lg mb-2">Smart Analytics</h3>
+              <p className="text-blue-100 text-sm">Advanced insights with bot detection and engagement patterns</p>
             </div>
           </div>
           
-          <div className="flex justify-center space-x-4 mt-8">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8">
             <Link href="/test">
-              <Button variant="secondary" className="bg-white text-blue-600 hover:bg-blue-50">
+              <Button variant="secondary" className="bg-white/90 backdrop-blur-sm text-blue-600 hover:bg-white hover:scale-105 transition-all duration-300 shadow-lg border border-white/20">
                 <TestTube className="mr-2 h-4 w-4" />
-                Test Page
+                Test Tracking
               </Button>
             </Link>
-            <Button variant="secondary" onClick={() => window.open('/api-docs', '_blank')} className="bg-white text-blue-600 hover:bg-blue-50">
+            <Button 
+              variant="secondary" 
+              onClick={() => window.open('/api-docs', '_blank')} 
+              className="bg-white/90 backdrop-blur-sm text-blue-600 hover:bg-white hover:scale-105 transition-all duration-300 shadow-lg border border-white/20"
+            >
               <Image className="mr-2 h-4 w-4" />
-              API Docs
+              API Documentation
             </Button>
           </div>
         </div>
 
         {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
-          <Card className="stat-card card-hover">
+          <Card className="stat-card card-hover group bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <Image className="h-6 w-6 text-blue-600" />
+                  <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <Image className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Pixels</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-blue-700">Total Pixels</p>
+                  <p className="text-2xl font-bold text-blue-900 group-hover:scale-105 transition-transform duration-300">
                     {dashboardData?.stats.totalPixels || 0}
                   </p>
                 </div>
@@ -254,17 +284,17 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="stat-card card-hover">
+          <Card className="stat-card card-hover group bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <Eye className="h-6 w-6 text-green-600" />
+                  <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-full group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <Eye className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Opened</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-green-700">Opened</p>
+                  <p className="text-2xl font-bold text-green-900 group-hover:scale-105 transition-transform duration-300">
                     {dashboardData?.stats.openedPixels || 0}
                   </p>
                 </div>
@@ -272,17 +302,17 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="stat-card card-hover">
+          <Card className="stat-card card-hover group bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="p-3 bg-purple-100 rounded-full">
-                    <BarChart3 className="h-6 w-6 text-purple-600" />
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <BarChart3 className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Open Rate</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-purple-700">Open Rate</p>
+                  <p className="text-2xl font-bold text-purple-900 group-hover:scale-105 transition-transform duration-300">
                     {dashboardData?.stats.openRate || 0}%
                   </p>
                 </div>
@@ -290,17 +320,17 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="stat-card card-hover">
+          <Card className="stat-card card-hover group bg-gradient-to-br from-orange-50 to-orange-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="p-3 bg-orange-100 rounded-full">
-                    <Clock className="h-6 w-6 text-orange-600" />
+                  <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <Clock className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Avg View Time</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-orange-700">Avg View Time</p>
+                  <p className="text-2xl font-bold text-orange-900 group-hover:scale-105 transition-transform duration-300">
                     {formatDuration(dashboardData?.stats.avgViewTime || 0)}
                   </p>
                 </div>
@@ -308,17 +338,17 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="stat-card card-hover">
+          <Card className="stat-card card-hover group bg-gradient-to-br from-indigo-50 to-indigo-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="p-3 bg-indigo-100 rounded-full">
-                    <Sparkles className="h-6 w-6 text-indigo-600" />
+                  <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <Sparkles className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total View Time</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-indigo-700">Total View Time</p>
+                  <p className="text-2xl font-bold text-indigo-900 group-hover:scale-105 transition-transform duration-300">
                     {formatDuration(dashboardData?.stats.totalViewTime || 0)}
                   </p>
                 </div>
@@ -326,20 +356,20 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="stat-card card-hover">
+          <Card className="stat-card card-hover group bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="p-3 bg-emerald-100 rounded-full">
-                    <CheckCircle className="h-6 w-6 text-emerald-600" />
+                  <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <CheckCircle className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Real Opens</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-emerald-700">Real Opens</p>
+                  <p className="text-2xl font-bold text-emerald-900 group-hover:scale-105 transition-transform duration-300">
                     {dashboardData?.stats.realOpens || 0}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-emerald-600 font-medium">
                     {dashboardData?.stats.realOpenRate || 0}% real rate
                   </p>
                 </div>
@@ -348,80 +378,103 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Actions */}
+        {/* Enhanced Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Create Pixel */}
-          <Card className="glass-card card-hover">
+          <Card className="glass-card card-hover group bg-gradient-to-br from-blue-50/80 to-purple-50/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-500">
             <CardHeader>
-              <CardTitle className="flex items-center text-gray-800">
-                <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                  <Sparkles className="h-5 w-5 text-blue-600" />
+              <CardTitle className="flex items-center text-gray-800 group-hover:text-blue-700 transition-colors duration-300">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl mr-3 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                  <Sparkles className="h-6 w-6 text-white" />
                 </div>
-                Create Tracking Pixel
+                <div>
+                  <span className="text-lg font-bold">Create Tracking Pixel</span>
+                  <p className="text-sm text-gray-600 font-normal">Generate advanced tracking with bot detection</p>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button 
                 onClick={() => createPixelMutation.mutate(undefined)}
                 disabled={createPixelMutation.isPending}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg"
+                className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-gradient"
               >
                 {createPixelMutation.isPending ? (
                   <>
-                    <Clock className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    <Clock className="mr-2 h-5 w-5 animate-spin" />
+                    Creating Magic...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 h-5 w-5" />
                     Generate New Pixel
                   </>
                 )}
               </Button>
-              <p className="text-sm text-gray-600 text-center">
-                ✨ Creates a unique tracking pixel with embed code
-              </p>
+              <div className="text-center bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <p className="text-sm text-gray-700 font-medium">
+                  🎯 Advanced Features Included
+                </p>
+                <div className="flex justify-center gap-4 mt-2 text-xs text-gray-600">
+                  <span>• Bot Detection</span>
+                  <span>• Duration Tracking</span>
+                  <span>• Real-time Analytics</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           {/* Check Pixel Status */}
-          <Card className="glass-card card-hover">
+          <Card className="glass-card card-hover group bg-gradient-to-br from-green-50/80 to-emerald-50/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-500">
             <CardHeader>
-              <CardTitle className="flex items-center text-gray-800">
-                <div className="p-2 bg-green-100 rounded-lg mr-3">
-                  <Eye className="h-5 w-5 text-green-600" />
+              <CardTitle className="flex items-center text-gray-800 group-hover:text-green-700 transition-colors duration-300">
+                <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl mr-3 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                  <Eye className="h-6 w-6 text-white" />
                 </div>
-                Check Pixel Status
+                <div>
+                  <span className="text-lg font-bold">Check Pixel Status</span>
+                  <p className="text-sm text-gray-600 font-normal">Monitor real-time tracking analytics</p>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="pixelId" className="text-gray-700">Pixel ID</Label>
+                <Label htmlFor="pixelId" className="text-gray-700 font-medium">Pixel ID</Label>
                 <Input
                   id="pixelId"
                   value={checkPixelId}
                   onChange={(e) => setCheckPixelId(e.target.value)}
-                  placeholder="Enter pixel ID to check"
-                  className="bg-white/80 border-gray-200"
+                  placeholder="Enter pixel ID to check status..."
+                  className="bg-white/80 border-gray-200 focus:border-green-400 focus:ring-green-400 transition-colors duration-300"
                 />
               </div>
               <Button 
                 onClick={() => checkPixelMutation.mutate(checkPixelId)}
                 disabled={checkPixelMutation.isPending || !checkPixelId}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg"
+                className="w-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-gradient disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {checkPixelMutation.isPending ? (
                   <>
-                    <Clock className="mr-2 h-4 w-4 animate-spin" />
-                    Checking...
+                    <Clock className="mr-2 h-5 w-5 animate-spin" />
+                    Analyzing...
                   </>
                 ) : (
                   <>
-                    <Eye className="mr-2 h-4 w-4" />
+                    <Eye className="mr-2 h-5 w-5" />
                     Check Status
                   </>
                 )}
               </Button>
+              <div className="text-center bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <p className="text-sm text-gray-700 font-medium">
+                  📊 Get Detailed Analytics
+                </p>
+                <div className="flex justify-center gap-4 mt-2 text-xs text-gray-600">
+                  <span>• View Count</span>
+                  <span>• Duration Data</span>
+                  <span>• Bot Detection</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

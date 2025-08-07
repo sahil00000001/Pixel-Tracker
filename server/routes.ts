@@ -20,27 +20,208 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (fs.existsSync(docsPath)) {
         const content = fs.readFileSync(docsPath, "utf8");
         
-        // Serve as HTML with basic styling for better readability
+        // Enhanced HTML with modern styling and markdown-like formatting
         const htmlContent = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Email Tracking API Documentation</title>
+    <title>📧 Email Tracking API Documentation</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
-        pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
-        code { background: #f5f5f5; padding: 2px 4px; border-radius: 3px; font-size: 0.9em; }
-        h1, h2, h3 { color: #333; }
-        h1 { border-bottom: 2px solid #007cba; padding-bottom: 10px; }
-        h2 { border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f9f9f9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tab {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .doc-content {
+            white-space: pre-wrap;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #2d3748;
+        }
+        
+        /* Code highlighting */
+        .doc-content {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 30px;
+            border-radius: 15px;
+            overflow-x: auto;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Scroll styling */
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 6px; }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%); }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
+            .header, .content { padding: 25px; }
+            .header h1 { font-size: 2rem; }
+            .nav-tabs { gap: 5px; }
+            .nav-tab { padding: 8px 15px; font-size: 0.9rem; }
+        }
+        
+        /* Animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header, .content, .footer { animation: fadeInUp 0.6s ease-out; }
+        .content { animation-delay: 0.2s; }
+        .footer { animation-delay: 0.4s; }
     </style>
 </head>
 <body>
-    <pre>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+    <div class="container">
+        <div class="header">
+            <h1>📧 Email Tracking API</h1>
+            <p>Advanced email open tracking with anti-ghost technology and duration analytics</p>
+            <span class="status-badge">Production Ready</span>
+            
+            <div class="nav-tabs">
+                <a href="#quick-start" class="nav-tab">🚀 Quick Start</a>
+                <a href="#endpoints" class="nav-tab">🔗 Endpoints</a>
+                <a href="#examples" class="nav-tab">💻 Examples</a>
+                <a href="#advanced" class="nav-tab">⚡ Advanced</a>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="doc-content">${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        </div>
+        
+        <div class="footer">
+            <p>🛡️ Enterprise-grade email tracking with bot detection and real-time analytics</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                DEVELOPED BY Sahil Vashisht (Software Developer) | 
+                <a href="/" style="color: rgba(255,255,255,0.9);">← Back to Dashboard</a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Smooth scrolling for navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = e.target.getAttribute('href');
+                if (target.startsWith('#')) {
+                    const element = document.querySelector(target);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
+        });
+        
+        // Add copy functionality to code blocks
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📧 Email Tracking API Documentation Loaded');
+        });
+    </script>
 </body>
 </html>`;
         
