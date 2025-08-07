@@ -33,6 +33,9 @@ interface TrackingPixel {
   lastSeenAt: string | null;
   totalViewTime: number;
   viewCount: number;
+  realOpens: number;
+  isDurationTracking: boolean;
+  activeSessionsCount: number;
   metadata?: any;
 }
 
@@ -40,9 +43,12 @@ interface DashboardData {
   stats: {
     totalPixels: number;
     openedPixels: number;
+    realOpens: number;
     openRate: number;
+    realOpenRate: number;
     avgViewTime: number;
     totalViewTime: number;
+    activeSessionsCount: number;
   };
   recentPixels: TrackingPixel[];
 }
@@ -51,6 +57,7 @@ interface CreatePixelResponse {
   id: string;
   trackingUrl: string;
   embedCode: string;
+  advancedEmbedCode: string;
   createdAt: string;
 }
 
@@ -98,8 +105,8 @@ export default function Dashboard() {
     },
     onSuccess: (data: CreatePixelResponse) => {
       toast({
-        title: "Tracking Pixel Created",
-        description: `Pixel ID: ${data.id}`,
+        title: "🎯 Advanced Tracking Pixel Created",
+        description: `ID: ${data.id} • Bot filtering enabled • Duration tracking available`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     },
@@ -227,8 +234,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
           <Card className="stat-card card-hover">
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -313,6 +320,27 @@ export default function Dashboard() {
                   <p className="text-sm font-medium text-gray-600">Total View Time</p>
                   <p className="text-2xl font-bold text-gray-900">
                     {formatDuration(dashboardData?.stats.totalViewTime || 0)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="stat-card card-hover">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="p-3 bg-emerald-100 rounded-full">
+                    <CheckCircle className="h-6 w-6 text-emerald-600" />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Real Opens</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {dashboardData?.stats.realOpens || 0}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {dashboardData?.stats.realOpenRate || 0}% real rate
                   </p>
                 </div>
               </div>
@@ -418,10 +446,46 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 {dashboardData?.recentPixels.map((pixel) => {
-                  // Generate URLs for each pixel
+                  // Generate URLs and embed codes for each pixel
                   const baseUrl = window.location.origin;
                   const trackingUrl = `${baseUrl}/api/pixel/${pixel.id}`;
                   const embedCode = `<img src="${trackingUrl}" width="1" height="1" style="display:none;" />`;
+                  const advancedEmbedCode = `
+<div style="display:none;">
+  <img src="${trackingUrl}" width="1" height="1" onload="initDurationTracking('${pixel.id}', '${baseUrl}')" />
+  <script>
+  function initDurationTracking(pixelId, baseUrl) {
+    const sessionId = Math.random().toString(36).substring(2, 15);
+    let isActive = true;
+    
+    const pingInterval = setInterval(() => {
+      if (!isActive) return;
+      fetch(baseUrl + '/api/pixel/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pixelId, sessionId, timestamp: Date.now() })
+      }).catch(() => {});
+    }, 2000);
+    
+    window.addEventListener('beforeunload', () => {
+      isActive = false;
+      navigator.sendBeacon(baseUrl + '/api/pixel/end', JSON.stringify({ pixelId, sessionId }));
+    });
+    
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        isActive = false;
+        clearInterval(pingInterval);
+        fetch(baseUrl + '/api/pixel/end', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pixelId, sessionId })
+        }).catch(() => {});
+      }
+    });
+  }
+  </script>
+</div>`.trim();
                   const isExpanded = expandedPixels.has(pixel.id);
                   
                   return (
@@ -446,26 +510,40 @@ export default function Dashboard() {
                               <p className="text-sm text-gray-600">
                                 📅 Created {formatTimestamp(pixel.createdAt)}
                                 {pixel.opened && pixel.openedAt && (
-                                  <> • 👀 Opened {formatTimestamp(pixel.openedAt)}</>
+                                  <span className="text-green-600 ml-2">
+                                    • ✅ Opened {formatTimestamp(pixel.openedAt)}
+                                  </span>
                                 )}
                               </p>
                               {pixel.opened && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  👁️ Views: {pixel.viewCount} • ⏱️ Time: {formatDuration(pixel.totalViewTime)}
+                                <div className="text-xs text-gray-500 mt-1 space-y-1">
+                                  <p>
+                                    👁️ Total Views: {pixel.viewCount} • 🎯 Real Opens: {pixel.realOpens} • ⏱️ View Time: {formatDuration(pixel.totalViewTime)}
+                                  </p>
                                   {pixel.lastSeenAt && (
-                                    <> • 🕐 Last seen: {formatTimestamp(pixel.lastSeenAt)}</>
+                                    <p>🕐 Last seen: {formatTimestamp(pixel.lastSeenAt)}</p>
                                   )}
-                                </p>
+                                  {pixel.isDurationTracking && (
+                                    <p className="text-blue-600">🔄 Duration tracking enabled • 📈 Active sessions: {pixel.activeSessionsCount}</p>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Badge 
-                              variant={pixel.opened ? "default" : "secondary"}
-                              className={pixel.opened ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}
-                            >
-                              {pixel.opened ? "✅ Opened" : "⏳ Pending"}
-                            </Badge>
+                            <div className="flex items-center space-x-1">
+                              {pixel.realOpens > 0 && (
+                                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-xs">
+                                  🎯 {pixel.realOpens} Real
+                                </Badge>
+                              )}
+                              <Badge 
+                                variant={pixel.opened ? "default" : "secondary"}
+                                className={pixel.opened ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}
+                              >
+                                {pixel.opened ? "✅ Opened" : "⏳ Pending"}
+                              </Badge>
+                            </div>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -496,9 +574,9 @@ export default function Dashboard() {
                               </div>
                             </div>
 
-                            {/* HTML Embed Code */}
+                            {/* Basic HTML Embed Code */}
                             <div>
-                              <Label className="text-xs text-gray-600 font-medium">HTML Embed Code</Label>
+                              <Label className="text-xs text-gray-600 font-medium">Basic HTML Embed Code</Label>
                               <div className="flex items-center space-x-2 mt-1">
                                 <Input value={embedCode} readOnly className="text-xs bg-gray-50" />
                                 <Button
@@ -510,6 +588,28 @@ export default function Dashboard() {
                                   <Copy className="h-3 w-3" />
                                 </Button>
                               </div>
+                              <p className="text-xs text-gray-500 mt-1">⚡ Basic tracking - detects opens only</p>
+                            </div>
+
+                            {/* Advanced HTML Embed Code with Duration Tracking */}
+                            <div>
+                              <Label className="text-xs text-gray-600 font-medium">🚀 Advanced Embed Code (Duration Tracking)</Label>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <textarea 
+                                  value={advancedEmbedCode} 
+                                  readOnly 
+                                  className="w-full text-xs bg-gray-50 border border-gray-200 rounded p-2 h-20 resize-none"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => copyToClipboard(advancedEmbedCode)}
+                                  className="bg-white/80 hover:bg-white border-gray-200"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <p className="text-xs text-blue-600 mt-1">✨ Advanced tracking - measures viewing duration with 2-second pings</p>
                             </div>
                           </div>
                         )}

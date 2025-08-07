@@ -17,6 +17,9 @@ interface TrackingPixel {
   lastSeenAt: string | null;
   totalViewTime: number;
   viewCount: number;
+  realOpens: number;
+  isDurationTracking: boolean;
+  activeSessionsCount: number;
   metadata?: any;
 }
 
@@ -24,9 +27,12 @@ interface DashboardData {
   stats: {
     totalPixels: number;
     openedPixels: number;
+    realOpens: number;
     openRate: number;
+    realOpenRate: number;
     avgViewTime: number;
     totalViewTime: number;
+    activeSessionsCount: number;
   };
   recentPixels: TrackingPixel[];
 }

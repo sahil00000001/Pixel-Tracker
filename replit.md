@@ -100,3 +100,20 @@ Preferred communication style: Simple, everyday language.
 - Real-time status updates via in-memory storage
 - Console logging for tracking events
 - Session-based viewing time calculation (30-second timeout)
+
+## Recent Changes
+
+### Major System Upgrade - Anti-Ghost Tracking & Duration Analytics (Jan 2025)
+- **🎯 False Positive Elimination**: Advanced bot/cache detection prevents ghost opens from email client prefetching
+- **⏱️ Precision Duration Tracking**: JavaScript-based system measures exact viewing time with 2-second heartbeat pings  
+- **🔍 Smart User Agent Analysis**: Comprehensive filtering of bots, crawlers, and automated email scanners
+- **📍 IP-based Real User Detection**: Tracks unique IP addresses to distinguish genuine human interactions
+- **📊 Enhanced Dashboard Analytics**: 
+  - Real Opens vs Total Opens comparison
+  - Bot filtering effectiveness metrics
+  - Live session monitoring with active viewer count
+  - Advanced duration analytics with session management
+- **🚀 Dual Tracking Options**:
+  - Basic: Standard 1x1 pixel (anti-cache headers)
+  - Advanced: JavaScript-enhanced with duration tracking and session management
+- **⚡ Real-time Performance**: Live updates, automatic session cleanup, and visibility change detection

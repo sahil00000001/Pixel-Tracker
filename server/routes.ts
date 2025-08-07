@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { durationPingSchema } from "@shared/schema";
 import fs from "fs";
 import path from "path";
 
@@ -94,6 +95,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: pixel.id,
         trackingUrl: `${baseUrl}/api/pixel/${pixel.id}`,
         embedCode: `<img src="${baseUrl}/api/pixel/${pixel.id}" width="1" height="1" style="display:none;" />`,
+        advancedEmbedCode: `
+<div style="display:none;">
+  <img src="${baseUrl}/api/pixel/${pixel.id}" width="1" height="1" onload="initDurationTracking('${pixel.id}', '${baseUrl}')" />
+  <script>
+  function initDurationTracking(pixelId, baseUrl) {
+    const sessionId = Math.random().toString(36).substring(2, 15);
+    let isActive = true;
+    let startTime = Date.now();
+    
+    // Ping every 2 seconds while active
+    const pingInterval = setInterval(() => {
+      if (!isActive) return;
+      
+      fetch(baseUrl + '/api/pixel/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pixelId: pixelId,
+          sessionId: sessionId,
+          timestamp: Date.now()
+        })
+      }).catch(() => {}); // Silent fail
+    }, 2000);
+    
+    // End session on page unload
+    window.addEventListener('beforeunload', () => {
+      isActive = false;
+      navigator.sendBeacon(baseUrl + '/api/pixel/end', JSON.stringify({
+        pixelId: pixelId,
+        sessionId: sessionId
+      }));
+    });
+    
+    // End session on visibility change (email client focus loss)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        isActive = false;
+        clearInterval(pingInterval);
+        fetch(baseUrl + '/api/pixel/end', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pixelId: pixelId,
+            sessionId: sessionId
+          })
+        }).catch(() => {});
+      }
+    });
+  }
+  </script>
+</div>`,
         createdAt: pixel.createdAt,
       });
     } catch (error) {
@@ -107,21 +159,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // Mark pixel as opened
-      await storage.markPixelAsOpened(id);
+      // Extract client information for bot detection
+      const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string || 'unknown';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      
+      // Mark pixel as opened with enhanced tracking
+      await storage.markPixelAsOpened(id, ipAddress, userAgent);
       console.log(`Pixel opened: ${id} at ${new Date().toISOString()}`);
       
-      // Return 1x1 transparent GIF
+      // Return 1x1 transparent GIF with anti-cache headers
       res.setHeader("Content-Type", "image/gif");
       res.setHeader("Content-Length", TRACKING_PIXEL.length);
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0");
       res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
+      res.setHeader("Expires", "Thu, 01 Jan 1970 00:00:00 GMT");
+      res.setHeader("Last-Modified", new Date().toUTCString());
+      res.setHeader("ETag", `"${Date.now()}-${Math.random()}"`);
       res.send(TRACKING_PIXEL);
     } catch (error) {
       console.error("Error tracking pixel:", error);
       // Still return the pixel even if tracking fails
       res.setHeader("Content-Type", "image/gif");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.send(TRACKING_PIXEL);
     }
   });
@@ -151,10 +210,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastSeenAt: pixel.lastSeenAt,
         totalViewTime: pixel.totalViewTime,
         viewCount: pixel.viewCount,
+        realOpens: pixel.realOpens,
+        isDurationTracking: pixel.isDurationTracking,
+        activeSessionsCount: Object.values(pixel.sessionData).filter(s => s.isActive).length,
       });
     } catch (error) {
       console.error("Error checking pixel status:", error);
       res.status(500).json({ message: "Failed to check pixel status" });
+    }
+  });
+
+  // POST: Duration tracking ping
+  app.post("/api/pixel/ping", async (req, res) => {
+    try {
+      const result = durationPingSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid ping data" });
+      }
+      
+      const { pixelId, sessionId, timestamp } = result.data;
+      await storage.recordDurationPing(pixelId, sessionId, timestamp);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error recording duration ping:", error);
+      res.status(500).json({ message: "Failed to record ping" });
+    }
+  });
+
+  // POST: End tracking session
+  app.post("/api/pixel/end", async (req, res) => {
+    try {
+      const { pixelId, sessionId } = req.body;
+      
+      if (!pixelId || !sessionId) {
+        return res.status(400).json({ message: "Pixel ID and session ID are required" });
+      }
+      
+      await storage.endSession(pixelId, sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error ending session:", error);
+      res.status(500).json({ message: "Failed to end session" });
     }
   });
 
