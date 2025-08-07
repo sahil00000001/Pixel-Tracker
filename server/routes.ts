@@ -226,11 +226,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = durationPingSchema.safeParse(req.body);
       
       if (!result.success) {
+        console.log("Invalid ping data:", req.body);
         return res.status(400).json({ message: "Invalid ping data" });
       }
       
       const { pixelId, sessionId, timestamp } = result.data;
-      await storage.recordDurationPing(pixelId, sessionId, timestamp);
+      const updatedPixel = await storage.recordDurationPing(pixelId, sessionId, timestamp);
+      
+      if (!updatedPixel) {
+        console.log(`Ping failed: pixel ${pixelId} not found`);
+        return res.status(404).json({ message: "Pixel not found" });
+      }
       
       res.json({ success: true });
     } catch (error) {
@@ -245,10 +251,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { pixelId, sessionId } = req.body;
       
       if (!pixelId || !sessionId) {
+        console.log("Missing required fields:", req.body);
         return res.status(400).json({ message: "Pixel ID and session ID are required" });
       }
       
-      await storage.endSession(pixelId, sessionId);
+      const updatedPixel = await storage.endSession(pixelId, sessionId);
+      
+      if (!updatedPixel) {
+        console.log(`End session failed: pixel ${pixelId} or session ${sessionId} not found`);
+        return res.status(404).json({ message: "Pixel or session not found" });
+      }
+      
       res.json({ success: true });
     } catch (error) {
       console.error("Error ending session:", error);

@@ -26,6 +26,35 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.trackingPixels = new Map();
+    
+    // Clean up stale sessions every 30 seconds
+    setInterval(() => {
+      this.cleanupStaleSessions();
+    }, 30000);
+  }
+
+  private cleanupStaleSessions() {
+    const now = new Date();
+    let cleanupCount = 0;
+    
+    this.trackingPixels.forEach((pixel, pixelId) => {
+      Object.entries(pixel.sessionData).forEach(([sessionId, session]) => {
+        if (session.isActive) {
+          const timeSinceLastPing = now.getTime() - session.lastPing.getTime();
+          
+          // If no ping for more than 30 seconds, end the session
+          if (timeSinceLastPing > 30000) {
+            console.log(`Auto-ending stale session ${sessionId} for pixel ${pixelId} (${Math.round(timeSinceLastPing / 1000)}s since last ping)`);
+            this.endSession(pixelId, sessionId);
+            cleanupCount++;
+          }
+        }
+      });
+    });
+    
+    if (cleanupCount > 0) {
+      console.log(`Cleaned up ${cleanupCount} stale sessions`);
+    }
   }
 
   async createTrackingPixel(insertPixel: InsertTrackingPixel): Promise<TrackingPixel> {
@@ -124,25 +153,29 @@ export class MemStorage implements IStorage {
     let sessionData = pixel.sessionData[sessionId];
     
     if (!sessionData) {
-      // New session
+      // New session - record start time
       sessionData = {
         startTime: now,
         lastPing: now,
         duration: 0,
         isActive: true
       };
+      console.log(`New session started: ${sessionId} for pixel ${pixelId} at ${now.toISOString()}`);
     } else {
       // Update existing session
       const timeSinceLastPing = now.getTime() - sessionData.lastPing.getTime();
       
-      // Only count if ping is within reasonable time (max 10 seconds gap)
+      // Only count as active if ping is within reasonable time (max 10 seconds gap)
       if (timeSinceLastPing <= 10000) {
-        sessionData.duration += timeSinceLastPing;
+        // Calculate total duration from start time to current ping
+        sessionData.duration = now.getTime() - sessionData.startTime.getTime();
         sessionData.lastPing = now;
         sessionData.isActive = true;
+        console.log(`Session ping: ${sessionId} - duration now ${Math.round(sessionData.duration / 1000)}s`);
       } else {
-        // Gap too large, mark as inactive but don't reset
+        // Gap too large, mark as inactive but don't reset duration
         sessionData.isActive = false;
+        console.log(`Session ${sessionId} marked inactive due to large gap: ${timeSinceLastPing}ms`);
       }
     }
     
@@ -165,12 +198,20 @@ export class MemStorage implements IStorage {
     if (!pixel || !pixel.sessionData[sessionId]) return undefined;
     
     const sessionData = pixel.sessionData[sessionId];
+    const now = new Date();
+    
+    // Calculate final duration if session is still active
+    if (sessionData.isActive && sessionData.startTime) {
+      sessionData.duration = now.getTime() - sessionData.startTime.getTime();
+    }
+    
     sessionData.isActive = false;
     
     // Add session duration to total view time
+    const finalDuration = sessionData.duration;
     const updatedPixel = {
       ...pixel,
-      totalViewTime: pixel.totalViewTime + sessionData.duration,
+      totalViewTime: pixel.totalViewTime + finalDuration,
       sessionData: {
         ...pixel.sessionData,
         [sessionId]: sessionData
@@ -178,7 +219,7 @@ export class MemStorage implements IStorage {
     };
     
     this.trackingPixels.set(pixelId, updatedPixel);
-    console.log(`Session ${sessionId} ended for pixel ${pixelId}. Duration: ${sessionData.duration}ms`);
+    console.log(`Session ${sessionId} ended for pixel ${pixelId}. Final duration: ${Math.round(finalDuration / 1000)}s (${finalDuration}ms). Total view time now: ${Math.round(updatedPixel.totalViewTime / 1000)}s`);
     return updatedPixel;
   }
 
@@ -213,11 +254,13 @@ export class MemStorage implements IStorage {
     pixels.forEach(pixel => {
       totalViewTime += pixel.totalViewTime;
       
-      // Add duration from active sessions
+      // Add duration from active sessions and count them
       Object.values(pixel.sessionData).forEach(session => {
         if (session.isActive) {
           activeSessionsCount++;
-          totalViewTime += session.duration;
+          // For active sessions, calculate current duration from start time
+          const currentDuration = new Date().getTime() - session.startTime.getTime();
+          totalViewTime += currentDuration;
         }
       });
     });
