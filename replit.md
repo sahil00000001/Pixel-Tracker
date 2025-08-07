@@ -105,7 +105,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Major System Upgrade - Anti-Ghost Tracking & Duration Analytics (Jan 2025)
 - **🎯 False Positive Elimination**: Advanced bot/cache detection prevents ghost opens from email client prefetching
-- **⏱️ Precision Duration Tracking**: JavaScript-based system measures exact viewing time with 2-second heartbeat pings  
+- **⏱️ Precision Duration Tracking**: JavaScript-based system measures exact viewing time with optimized 5-second pings and client-side calculation  
 - **🔍 Smart User Agent Analysis**: Comprehensive filtering of bots, crawlers, and automated email scanners
 - **📍 IP-based Real User Detection**: Tracks unique IP addresses to distinguish genuine human interactions
 - **📊 Enhanced Dashboard Analytics**: 
@@ -116,4 +116,4 @@ Preferred communication style: Simple, everyday language.
 - **🚀 Dual Tracking Options**:
   - Basic: Standard 1x1 pixel (anti-cache headers)
   - Advanced: JavaScript-enhanced with duration tracking and session management
-- **⚡ Real-time Performance**: Live updates, automatic session cleanup, and visibility change detection
+- **⚡ Production-Ready Features**: Smart retry logic, resume capability, multiple instance protection, efficient data transmission, and automatic session cleanup

@@ -8,6 +8,7 @@ export interface IStorage {
   markPixelAsOpened(id: string, ipAddress: string, userAgent: string): Promise<TrackingPixel | undefined>;
   recordDurationPing(pixelId: string, sessionId: string, timestamp: number): Promise<TrackingPixel | undefined>;
   endSession(pixelId: string, sessionId: string): Promise<TrackingPixel | undefined>;
+  endSessionWithDuration(pixelId: string, sessionId: string, duration: number): Promise<TrackingPixel | undefined>;
   getAllTrackingPixels(): Promise<TrackingPixel[]>;
   getStats(): Promise<{
     totalPixels: number;
@@ -42,8 +43,8 @@ export class MemStorage implements IStorage {
         if (session.isActive) {
           const timeSinceLastPing = now.getTime() - session.lastPing.getTime();
           
-          // If no ping for more than 30 seconds, end the session
-          if (timeSinceLastPing > 30000) {
+          // If no ping for more than 60 seconds, end the session (increased from 30s due to 5s ping interval)
+          if (timeSinceLastPing > 60000) {
             console.log(`Auto-ending stale session ${sessionId} for pixel ${pixelId} (${Math.round(timeSinceLastPing / 1000)}s since last ping)`);
             this.endSession(pixelId, sessionId);
             cleanupCount++;
@@ -220,6 +221,31 @@ export class MemStorage implements IStorage {
     
     this.trackingPixels.set(pixelId, updatedPixel);
     console.log(`Session ${sessionId} ended for pixel ${pixelId}. Final duration: ${Math.round(finalDuration / 1000)}s (${finalDuration}ms). Total view time now: ${Math.round(updatedPixel.totalViewTime / 1000)}s`);
+    return updatedPixel;
+  }
+
+  async endSessionWithDuration(pixelId: string, sessionId: string, clientDuration: number): Promise<TrackingPixel | undefined> {
+    const pixel = this.trackingPixels.get(pixelId);
+    if (!pixel || !pixel.sessionData[sessionId]) return undefined;
+    
+    const sessionData = pixel.sessionData[sessionId];
+    sessionData.isActive = false;
+    
+    // Use client-provided duration (more accurate than server-side calculation)
+    const finalDuration = clientDuration > 0 ? clientDuration : sessionData.duration;
+    sessionData.duration = finalDuration;
+    
+    const updatedPixel = {
+      ...pixel,
+      totalViewTime: pixel.totalViewTime + finalDuration,
+      sessionData: {
+        ...pixel.sessionData,
+        [sessionId]: sessionData
+      }
+    };
+    
+    this.trackingPixels.set(pixelId, updatedPixel);
+    console.log(`Session ${sessionId} ended for pixel ${pixelId}. Client duration: ${Math.round(finalDuration / 1000)}s (${finalDuration}ms). Total view time now: ${Math.round(updatedPixel.totalViewTime / 1000)}s`);
     return updatedPixel;
   }
 

@@ -455,32 +455,68 @@ export default function Dashboard() {
   <img src="${trackingUrl}" width="1" height="1" onload="initDurationTracking('${pixel.id}', '${baseUrl}')" />
   <script>
   function initDurationTracking(pixelId, baseUrl) {
-    const sessionId = Math.random().toString(36).substring(2, 15);
-    let isActive = true;
+    // Prevent multiple instances
+    if (window._trackingInitialized) return;
+    window._trackingInitialized = true;
     
-    const pingInterval = setInterval(() => {
+    const sessionId = Math.random().toString(36).substring(2, 15);
+    const startTime = performance.now();
+    let isActive = true;
+    let pingInterval;
+    let retryCount = 0;
+    
+    // Send ping with retry logic
+    function sendPing() {
       if (!isActive) return;
+      
       fetch(baseUrl + '/api/pixel/ping', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pixelId, sessionId, timestamp: Date.now() })
-      }).catch(() => {});
-    }, 2000);
+      }).catch(error => {
+        console.warn('Ping failed:', error);
+        retryCount++;
+        if (retryCount < 3) {
+          setTimeout(sendPing, 1000 * retryCount); // Exponential backoff
+        }
+      });
+    }
     
-    window.addEventListener('beforeunload', () => {
+    // Start pinging every 5 seconds (reduced frequency)
+    pingInterval = setInterval(sendPing, 5000);
+    
+    // Send final duration calculation
+    function endSession() {
+      if (!isActive) return;
       isActive = false;
-      navigator.sendBeacon(baseUrl + '/api/pixel/end', JSON.stringify({ pixelId, sessionId }));
-    });
-    
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        isActive = false;
-        clearInterval(pingInterval);
+      clearInterval(pingInterval);
+      
+      const duration = Math.round(performance.now() - startTime);
+      const data = new URLSearchParams({ pixelId, sessionId, duration: duration.toString() });
+      
+      try {
+        navigator.sendBeacon(baseUrl + '/api/pixel/end', data);
+      } catch (e) {
         fetch(baseUrl + '/api/pixel/end', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pixelId, sessionId })
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: data
         }).catch(() => {});
+      }
+    }
+    
+    // Handle page unload
+    window.addEventListener('beforeunload', endSession);
+    
+    // Handle visibility changes with resume capability
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        endSession();
+      } else if (!isActive) {
+        // Resume tracking if user returns to tab
+        isActive = true;
+        retryCount = 0;
+        pingInterval = setInterval(sendPing, 5000);
       }
     });
   }
@@ -609,7 +645,7 @@ export default function Dashboard() {
                                   <Copy className="h-3 w-3" />
                                 </Button>
                               </div>
-                              <p className="text-xs text-blue-600 mt-1">✨ Advanced tracking - measures viewing duration with 2-second pings</p>
+                              <p className="text-xs text-blue-600 mt-1">✨ Advanced tracking - measures precise viewing duration with smart retry and resume</p>
                             </div>
                           </div>
                         )}

@@ -248,14 +248,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST: End tracking session
   app.post("/api/pixel/end", async (req, res) => {
     try {
-      const { pixelId, sessionId } = req.body;
+      let pixelId, sessionId, duration;
+      
+      // Handle both JSON and URL-encoded data (for sendBeacon compatibility)
+      if (req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+        pixelId = req.body.pixelId;
+        sessionId = req.body.sessionId;
+        duration = parseInt(req.body.duration) || 0;
+      } else {
+        ({ pixelId, sessionId, duration = 0 } = req.body);
+      }
       
       if (!pixelId || !sessionId) {
         console.log("Missing required fields:", req.body);
         return res.status(400).json({ message: "Pixel ID and session ID are required" });
       }
       
-      const updatedPixel = await storage.endSession(pixelId, sessionId);
+      const updatedPixel = await storage.endSessionWithDuration(pixelId, sessionId, duration);
       
       if (!updatedPixel) {
         console.log(`End session failed: pixel ${pixelId} or session ${sessionId} not found`);
