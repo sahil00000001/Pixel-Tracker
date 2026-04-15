@@ -12,7 +12,12 @@ const TRACKING_PIXEL = Buffer.from(
 );
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
+
+  // Health check
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // GET: Serve API documentation
   app.get("/api-docs", (req, res) => {
     try {
