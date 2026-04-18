@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 import TestPage from "@/pages/test";
+import EmailSender from "@/pages/email-sender";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/test" component={TestPage} />
+      <Route path="/email-sender" component={EmailSender} />
       <Route component={NotFound} />
     </Switch>
   );

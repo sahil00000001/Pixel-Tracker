@@ -32,3 +32,45 @@ export const durationPingSchema = z.object({
 });
 
 export type DurationPing = z.infer<typeof durationPingSchema>;
+
+// ─── Job Application Email Types ────────────────────────────────────────────
+
+export interface LinkedInPost {
+  name: string;
+  headline?: string;
+  profile_url?: string;
+  emails: string[];
+  phones?: string[];
+  tech_stack?: string[];
+  post_text: string;
+}
+
+export type EmailStatus = 'pending' | 'sent' | 'failed' | 'skipped';
+
+export interface GeneratedEmail {
+  id: string;
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  recruiter: string;
+  role: string;
+  company: string;
+  categories: string[];
+  status: EmailStatus;
+  sentAt?: string;
+  error?: string;
+  trackingPixelId?: string;
+}
+
+export interface SendJob {
+  id: string;
+  total: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+  isRunning: boolean;
+  startedAt: string;
+  completedAt?: string;
+  emails: GeneratedEmail[];
+}

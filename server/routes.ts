@@ -1,7 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { emailStorage } from "./email-storage";
+import { generateEmails, injectTrackingPixel } from "./email-generator";
 import { durationPingSchema } from "@shared/schema";
+import type { LinkedInPost, GeneratedEmail } from "@shared/schema";
+import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 
@@ -480,6 +484,289 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // JOB APPLICATION EMAIL ROUTES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // POST: Save Gmail credentials (in-memory only, never persisted to disk)
+  app.post("/api/emails/config", (req, res) => {
+    const { gmailUser, gmailPass } = req.body;
+    if (!gmailUser || !gmailPass) {
+      return res.status(400).json({ message: "gmailUser and gmailPass are required" });
+    }
+    emailStorage.setGmailConfig(gmailUser.trim(), gmailPass.trim());
+    res.json({ success: true, message: "Gmail credentials saved in memory" });
+  });
+
+  // POST: Test Gmail connection
+  app.post("/api/emails/test-connection", async (req, res) => {
+    const { gmailUser, gmailPass } = req.body;
+    if (!gmailUser || !gmailPass) {
+      return res.status(400).json({ message: "gmailUser and gmailPass are required" });
+    }
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: gmailUser.trim(), pass: gmailPass.trim() },
+      });
+      await transporter.verify();
+      emailStorage.setGmailConfig(gmailUser.trim(), gmailPass.trim());
+      res.json({ success: true, message: "Gmail connection verified successfully" });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: parseGmailError(err.message || "Connection failed") });
+    }
+  });
+
+  // POST: Send a test email to yourself so you can see how it looks
+  app.post("/api/emails/send-test", async (req, res) => {
+    const { gmailUser, gmailPass } = req.body;
+    if (!gmailUser || !gmailPass) {
+      return res.status(400).json({ message: "gmailUser and gmailPass are required" });
+    }
+    try {
+      const testPost: LinkedInPost = {
+        name: "Test Recruiter",
+        emails: [gmailUser.trim()],
+        tech_stack: ["python", "aws", "docker", "langchain", "react"],
+        post_text:
+          "🚀 Hiring: AI/ML Full Stack Engineer\n\nTechCorp AI is looking for a talented engineer to join our team!\n\n📍 Location: Bangalore (Hybrid)\n💼 Experience: 1-3 Years\n\n🔧 Required: Python, LangChain, RAG, AWS, React, Docker\n\n📩 Apply: " +
+          gmailUser.trim() +
+          "\n\n#Hiring #AIEngineer",
+      };
+      const [testEmail] = generateEmails([testPost], gmailUser.trim());
+      if (!testEmail) {
+        return res.status(500).json({ message: "Failed to generate test email" });
+      }
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: gmailUser.trim(), pass: gmailPass.trim() },
+      });
+
+      await transporter.sendMail({
+        from: `"Sahil Vashisht" <${gmailUser.trim()}>`,
+        to: gmailUser.trim(),
+        replyTo: gmailUser.trim(),
+        subject: `[TEST PREVIEW] ${testEmail.subject}`,
+        html: testEmail.html,
+      });
+
+      res.json({ success: true, message: `Test email sent to ${gmailUser.trim()} — check your inbox` });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: parseGmailError(err.message || "Test send failed") });
+    }
+  });
+
+  // POST: Generate emails from LinkedIn JSON data
+  app.post("/api/emails/generate", (req, res) => {
+    try {
+      const { posts, fromEmail } = req.body as { posts: LinkedInPost[]; fromEmail: string };
+      if (!posts || !Array.isArray(posts)) {
+        return res.status(400).json({ message: "posts array is required" });
+      }
+      const emails = generateEmails(posts, fromEmail || "vashishtsahil99@gmail.com");
+      res.json({ emails, total: emails.length });
+    } catch (err: any) {
+      console.error("Error generating emails:", err);
+      res.status(500).json({ message: err.message || "Failed to generate emails" });
+    }
+  });
+
+  // POST: Start sending email queue (non-blocking — returns jobId immediately)
+  app.post("/api/emails/send", async (req, res) => {
+    try {
+      const {
+        emails,
+        gmailUser,
+        gmailPass,
+        delayMs = 8000,
+      } = req.body as {
+        emails: GeneratedEmail[];
+        gmailUser: string;
+        gmailPass: string;
+        delayMs: number;
+      };
+
+      if (!emails || !Array.isArray(emails) || emails.length === 0) {
+        return res.status(400).json({ message: "emails array is required" });
+      }
+      if (!gmailUser || !gmailPass) {
+        return res.status(400).json({ message: "gmailUser and gmailPass are required" });
+      }
+
+      const job = emailStorage.createJob(emails);
+
+      // Resolve base URL for tracking pixel
+      let baseUrl = "http://localhost:5000";
+      if (process.env.REPLIT_DOMAINS) {
+        baseUrl = `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`;
+      } else if (process.env.RENDER_EXTERNAL_URL) {
+        baseUrl = process.env.RENDER_EXTERNAL_URL;
+      } else if (req.headers["x-forwarded-proto"] && req.headers.host) {
+        baseUrl = `${req.headers["x-forwarded-proto"]}://${req.headers.host}`;
+      } else if (req.headers.host && process.env.NODE_ENV === "production") {
+        baseUrl = `https://${req.headers.host}`;
+      }
+
+      // Process queue in background
+      processEmailQueue(job.id, job.emails, gmailUser, gmailPass, delayMs, baseUrl).catch(
+        (err) => console.error("Queue error:", err)
+      );
+
+      res.json({ jobId: job.id, total: job.total });
+    } catch (err: any) {
+      console.error("Error starting send job:", err);
+      res.status(500).json({ message: err.message || "Failed to start send job" });
+    }
+  });
+
+  // GET: Poll job status
+  app.get("/api/emails/job/:id", (req, res) => {
+    const job = emailStorage.getJob(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+    res.json(job);
+  });
+
+  // GET: All sent email records (enriched with pixel open tracking data)
+  app.get("/api/emails/records", async (req, res) => {
+    try {
+      const records = emailStorage.getSentRecords();
+
+      const enriched = await Promise.all(
+        records.map(async (record) => {
+          if (!record.trackingPixelId) return { ...record, pixelData: null };
+          try {
+            const pixel = await storage.getTrackingPixel(record.trackingPixelId);
+            if (!pixel) return { ...record, pixelData: null };
+            return {
+              ...record,
+              pixelData: {
+                opened: pixel.opened,
+                openedAt: pixel.openedAt ? pixel.openedAt.toISOString() : null,
+                viewCount: pixel.viewCount,
+                realOpens: pixel.realOpens,
+                totalViewTimeMs: pixel.totalViewTime,
+              },
+            };
+          } catch {
+            return { ...record, pixelData: null };
+          }
+        })
+      );
+
+      res.json({
+        records: enriched,
+        stats: emailStorage.getSentRecordStats(),
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: "Failed to fetch records" });
+    }
+  });
+
+  // GET: All jobs list
+  app.get("/api/emails/jobs", (req, res) => {
+    res.json(emailStorage.getAllJobs());
+  });
+
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// ─── Gmail Error Parser ───────────────────────────────────────────────────────
+
+function parseGmailError(raw: string): string {
+  if (/Username and Password not accepted|InvalidLogin|534-5\.7/i.test(raw))
+    return "Invalid App Password. Make sure 2-Step Verification is ON and you generated an App Password at myaccount.google.com/apppasswords.";
+  if (/535-5\.7|authentication failed/i.test(raw))
+    return "Gmail authentication failed. Check the App Password is correct and hasn't been revoked.";
+  if (/454|too many login/i.test(raw))
+    return "Too many login attempts. Wait 1–2 minutes and try again.";
+  if (/550|relay access denied/i.test(raw))
+    return "Gmail rejected the message. Verify your App Password and account settings.";
+  if (/ETIMEDOUT|ECONNREFUSED|ENOTFOUND/i.test(raw))
+    return "Connection failed. Check your internet connection.";
+  if (/Daily sending quota exceeded/i.test(raw))
+    return "Gmail daily sending limit reached (500 emails). Try again tomorrow.";
+  return raw;
+}
+
+// ─── Background Email Queue Processor ────────────────────────────────────────
+
+async function processEmailQueue(
+  jobId: string,
+  emails: GeneratedEmail[],
+  gmailUser: string,
+  gmailPass: string,
+  delayMs: number,
+  baseUrl: string
+) {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: gmailUser, pass: gmailPass },
+    pool: true,         // reuse SMTP connection across emails
+    maxConnections: 1,  // Gmail allows 1 concurrent connection
+  });
+
+  for (let i = 0; i < emails.length; i++) {
+    const email = emails[i];
+
+    if (email.status === "skipped") {
+      emailStorage.updateEmailInJob(jobId, email.id, { status: "skipped" });
+      emailStorage.addSentRecord({ ...email, status: "skipped" });
+      continue;
+    }
+
+    // Create tracking pixel — non-fatal if it fails
+    let htmlToSend = email.html;
+    let pixelId: string | undefined;
+    try {
+      const { storage } = await import("./storage");
+      const pixel = await storage.createTrackingPixel({
+        openedAt: null,
+        metadata: { emailId: email.id, to: email.to, company: email.company, role: email.role },
+      });
+      pixelId = pixel.id;
+      htmlToSend = injectTrackingPixel(email.html, `${baseUrl}/api/pixel/${pixel.id}`);
+      emailStorage.updateEmailInJob(jobId, email.id, { trackingPixelId: pixel.id });
+    } catch {
+      // Non-fatal
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"Sahil Vashisht" <${gmailUser}>`,
+        to: email.to,
+        replyTo: gmailUser,
+        subject: email.subject,
+        html: htmlToSend,
+        headers: {
+          "X-Mailer": "Job-Application-Sender/1.0",
+          "Precedence": "bulk",
+        },
+      });
+
+      const now = new Date().toISOString();
+      emailStorage.updateEmailInJob(jobId, email.id, {
+        status: "sent",
+        sentAt: now,
+        trackingPixelId: pixelId,
+      });
+      emailStorage.addSentRecord({ ...email, status: "sent", sentAt: now, trackingPixelId: pixelId });
+      console.log(`[Email ${i + 1}/${emails.length}] Sent → ${email.to}`);
+    } catch (err: any) {
+      const errorMsg = parseGmailError(err.message || "Send failed");
+      emailStorage.updateEmailInJob(jobId, email.id, { status: "failed", error: errorMsg });
+      emailStorage.addSentRecord({ ...email, status: "failed", error: errorMsg });
+      console.error(`[Email ${i + 1}/${emails.length}] Failed → ${email.to}: ${errorMsg}`);
+    }
+
+    // Gmail SMTP rate-limit compliance: wait between sends, skip delay after last email
+    if (i < emails.length - 1) {
+      await new Promise((r) => setTimeout(r, Math.max(delayMs, 5000)));
+    }
+  }
+
+  transporter.close();
+  emailStorage.completeJob(jobId);
+  console.log(`[Email] Job ${jobId} complete.`);
 }

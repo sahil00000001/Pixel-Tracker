@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -216,6 +217,14 @@ export default function Dashboard() {
               <p className="text-sm text-blue-200 max-w-2xl mx-auto md:mx-0">
                 🚀 Track email opens with invisible 1x1 pixel images. Perfect for email marketing campaigns, newsletters, and engagement analytics with advanced anti-ghost technology.
               </p>
+              <div className="mt-4">
+                <Link href="/email-sender">
+                  <a className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all">
+                    <Mail className="w-4 h-4" />
+                    Job Application Email Sender →
+                  </a>
+                </Link>
+              </div>
             </div>
           </div>
           
@@ -684,10 +693,10 @@ export default function Dashboard() {
                             <div>
                               <Label className="text-xs text-gray-600 font-medium">🚀 Advanced Embed Code (Duration Tracking)</Label>
                               <div className="flex items-center space-x-2 mt-1">
-                                <textarea 
-                                  value={advancedEmbedCode} 
-                                  readOnly 
-                                  className="w-full text-xs bg-gray-50 border border-gray-200 rounded p-2 h-20 resize-none"
+                                <Textarea
+                                  value={advancedEmbedCode}
+                                  readOnly
+                                  className="w-full text-xs bg-gray-50 border border-gray-200 h-20 resize-none"
                                 />
                                 <Button
                                   variant="outline"
